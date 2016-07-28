@@ -1,0 +1,208 @@
+int num = 140;
+int count = 0;
+float[] xArr;
+float[] yArr;
+int r, g, b;
+int lr, lg, lb;
+
+Particle p;
+import ddf.minim.*;
+
+Minim minim;
+AudioInput in;
+color white;
+
+
+void setup() {
+  size(1000, 500);
+  smooth(); 
+  frameRate(12);
+  white = color(255);
+  colorMode(HSB, 100);
+  minim = new Minim(this);
+  minim.debugOn();
+
+  in = minim.getLineIn(Minim.STEREO, 1000);
+
+  r = g= b = 0;
+
+  clearBackground();
+  count = 0;
+  restart();
+
+  p = new Particle();
+}
+
+void clearBackground() {
+  background(0);
+}
+
+void restart() {
+  if (count > 0) {
+    xArr = new float[num];
+    yArr = new float[num];
+    count = 1;
+  } else {
+    xArr = new float[num];
+    yArr = new float[num];
+  } 
+  // println("rstart");
+  lr = r; 
+  lg = g; 
+  lb = b; 
+  r = int(random(255));
+  g = int(random(255));
+  b = int(random(255));
+}
+
+//================================= frame loop
+
+void draw() {
+
+  fill(0, 2);
+  noStroke();
+  rect(0, 0, width, height);
+  drawPoints();
+  for (int i = 0; i < in.bufferSize() - 1; i++)
+  {
+    stroke((1+in.left.get(i))*50, 100, 100, 8);
+    line(i, 210 + in.left.get(i)*1500, i+1, 210 + in.left.get(i+1)*1500);
+    line(i, 270 + in.left.get(i)*1500, i+1, 270 + in.left.get(i+1)*1500);    
+    stroke(white, 20);
+    line(i, 240 + in.right.get(i)*1500, i+1, 240 + in.right.get(i+1)*1500);
+  }
+    NewThings();
+}
+
+
+
+
+void drawPoints() {
+
+  p.update();
+
+  float newx = p.x;
+  float newy = p.y;
+
+  int alph = 2;
+  // line to all the others
+  for (int i=count; i>0; i--) {
+
+    strokeWeight(1);
+    stroke(r, g, b, alph);
+    line(newx, newy, xArr[i], yArr[i]);
+
+
+    strokeWeight(1);
+    stroke(255, 10);
+    line(newx, newy, p.lastx, p.lasty);
+  }
+
+  // next
+  count++;
+  if (count >= num) {
+    restart();
+  }
+  xArr[count] = newx;
+  yArr[count] = newy;
+}
+
+void mousePressed() { 
+  clearBackground();
+}
+
+class Particle {
+
+  float x, y; 
+  float lastx, lasty;  
+  float pct = 0.0;
+
+  float beginX, beginY; 
+  float endX, endY;    
+  float distX, distY;
+  int grey, alph;
+
+  float exponent = 2;   // Determines the curve
+  float step = 0.05;    // Size of each step along the path
+
+  Particle () {
+    init();
+  }
+
+  void init() {
+
+    grey = int(random(255));
+    alph = int(random(100));
+
+    beginX = random(width * 2) - (width/2);
+    beginY = random(height * 2) - (height/2);
+
+    endX = random(width * 2) - (width/2);
+    endY = random(height * 2) - (height/2);
+
+
+    distX = endX - beginX;
+    distY = endY - beginY;
+  }
+
+  void update() {
+    lastx = x;
+    lasty = y;
+
+    pct += step;
+    if (pct < 1.0) {
+      x = beginX + (pct * distX);
+      y = beginY + (pow(pct, exponent) * distY);
+    } else {
+      pct = 0.0;
+      beginX = x;
+      beginY = y;
+      endX = random(width * 2) - (width/2);
+      endY = random(height * 2) - (height/2);
+      distX = endX - beginX;
+      distY = endY - beginY;
+    }
+  }
+}
+void stop()
+{
+  // always close Minim audio classes when you are done with them
+  in.close();
+  minim.stop();
+  super.stop();
+}
+void NewThings() {
+  float resolution = 260; // how many points in the circle
+  float rad = 150;
+  float x = 1;
+  float y = 1;
+  float t = 0; // time passed
+  float tChange = .02; // how quick time flies
+
+  float nVal; // noise value
+  float nInt = 1; // noise intensity
+  float nAmp = 1; // noise amplitude
+
+  translate(width/2, height/2);
+  noFill();
+  stroke(r, g, b, 8);
+  strokeWeight(1);
+
+  nInt = map(random(390, 420), 0, width, 1, 500); 
+  nAmp = map(random(390, 420), 0, height, -1.0, 1.0); 
+
+  beginShape();
+  for (float a=0; a<=TWO_PI; a+=TWO_PI/resolution) {
+
+    nVal = map(noise( cos(a)*nInt+1, sin(a)*nInt+1, t ), 0.0, 1.0, nAmp, 1.0); // map noise value to match the amplitude
+
+    x = cos(a)*rad *nVal;
+    y = sin(a)*rad *nVal;
+
+
+    vertex(x, y);
+  }
+  endShape(CLOSE);
+
+  t += tChange;
+}
